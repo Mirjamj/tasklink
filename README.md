@@ -13,6 +13,6 @@ An internal task management app for a fictional company where work tasks can be 
 * **Employee role – Can view and complete their own tasks**
 * **Tasks have deadlines**
 * **Real-time updates – See task changes instantly across users**
-* **Responsive design – Looks good on all devices Tech Stack**
+* **Responsive design – Looks good on all devices**
 
 ![image](https://github.com/user-attachments/assets/a2c99356-afdf-468f-a643-0c7409f38263)
