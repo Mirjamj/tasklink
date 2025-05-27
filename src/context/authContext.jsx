@@ -1,24 +1,24 @@
 'use client'
 
 import { auth, db } from '@/lib/firebase'
-import { createUserWithEmailAndPassword, EmailAuthProvider, getAuth, onAuthStateChanged, reauthenticateWithCredential, signInWithEmailAndPassword, signOut, updatePassword, updateProfile } from 'firebase/auth'
+import { createUserWithEmailAndPassword, EmailAuthProvider, onAuthStateChanged, reauthenticateWithCredential, signInWithEmailAndPassword, signOut, updatePassword, updateProfile } from 'firebase/auth'
 import { doc, getDoc, setDoc, Timestamp, updateDoc } from 'firebase/firestore'
 import { useRouter } from 'next/navigation'
 import toast from 'react-hot-toast'
 
 const { createContext, useContext, useState, useEffect } = require('react')
-
 const AuthContext = createContext()
 
+// Provides authentication context for the app: user state, auth status, and related methods
 export const AuthProvider = ({ children }) => {
+  // State to hold current user object, loading status, and whether auth state has loaded
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(false)
   const [authLoaded, setAuthLoaded] = useState(false)
 
   const router = useRouter()
 
-  console.log(user)
-
+  // Subscribe to Firebase auth state changes on component mount
   useEffect(() => {
     const unsub = onAuthStateChanged(auth, async (firebaseUser) => {
       if (!firebaseUser) {
@@ -29,15 +29,14 @@ export const AuthProvider = ({ children }) => {
 
       const docRef = doc(db, 'users', firebaseUser.uid)
 
+      // Retry fetching user document up to 5 times with delay, in case of eventual consistency delays
       const getUserDocWithRetry = async (retries = 5, delay = 300) => {
         let docSnap = null
         for (let i = 0; i < retries; i++) {
           docSnap = await getDoc(docRef)
           if (docSnap.exists()) break
-
           await new Promise(resolve => setTimeout(resolve, delay))
         }
-
         return docSnap
       }
 
@@ -56,6 +55,7 @@ export const AuthProvider = ({ children }) => {
     return () => unsub()
   }, [])
 
+  // Register new user with email, password, and displayName
   const register = async (email, password, displayName) => {
     setLoading(true)
 
@@ -69,6 +69,7 @@ export const AuthProvider = ({ children }) => {
         return
       }
 
+      // Create user document in Firestore with default role and profile settings
       await setDoc(doc(db, 'users', res.user.uid), {
         uid: res.user.uid,
         email: res.user.email,
@@ -76,7 +77,6 @@ export const AuthProvider = ({ children }) => {
         role: 'user',
         createdAt: Timestamp.now(),
         verified: false,
-        color: '#ff4567'
       })
 
     } catch (error) {
@@ -87,11 +87,13 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Log out the current user and redirect to home page
   const logout = async () => {
     router.replace('/')
     await signOut(auth)
   }
 
+  // Log in existing user with email and password
   const login = async (email, password) => {
     setLoading(true)
     try {
@@ -104,11 +106,13 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Helper function to check if current user has admin role
   const isAdmin = () => {
     if (!user) return false
     return user.role === 'admin'
   }
 
+  // Update user profile data in Firestore and local state
   const updateUser = async (user, newUserData) => {
     setLoading(true)
     const toastId = toast.loading('Loading...')
@@ -125,6 +129,7 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Change the current user's password after re-authenticating with old password
   const changePassword = async (oldPassword, newPassword) => {
     setLoading(true)
     const toastId = toast.loading('Loading...')
@@ -155,6 +160,7 @@ export const AuthProvider = ({ children }) => {
     }
   }
 
+  // Context value to be provided to consuming components
   const value = {
     user,
     loading,
@@ -174,6 +180,7 @@ export const AuthProvider = ({ children }) => {
   )
 }
 
+// Custom hook to access authentication context, throws error if used outside provider
 export const useAuth = () => {
   const context = useContext(AuthContext)
   if (!context) {

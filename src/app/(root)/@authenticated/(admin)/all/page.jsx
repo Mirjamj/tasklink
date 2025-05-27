@@ -2,6 +2,8 @@ import { Header } from '@/components/header'
 import React from 'react'
 import { AllUsersTasksList } from './_components/all-users-tasks-list'
 
+//Page that displays all tasks grouped by user.
+//Includes a header and a horizontally scrollable task list.
 function AllTasksPage() {
   return (
     <>

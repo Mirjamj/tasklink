@@ -6,26 +6,33 @@ import { format } from "date-fns"
 import { db } from "@/lib/firebase"
 
 const { createContext, useContext, useState, useEffect, useMemo } = require("react")
-
 const TasksContext = createContext()
 
+// Provides task-related state and functions to manage tasks for the authenticated user
 export const TasksProvider = ({ children }) => {
 
+  // Local state for loading indicator and list of tasks
   const [loading, setLoading] = useState(false)
   const [tasks, setTasks] = useState([])
+
+  // Access auth context to check user and roles
   const { isAdmin, authLoaded, user } = useAuth()
 
+  // Subscribe to Firestore tasks collection on user or auth load changes
   useEffect(() => {
     if (!authLoaded || !user) return
     setLoading(true)
     let q
 
+    // Admins get all tasks, ordered by date and order
     if (user.role === 'admin') {
       q = query(collection(db, 'tasks'), orderBy('date'), orderBy('order'))
     } else {
+      // Regular users get only their tasks, filtered by ownerId
       q = query(collection(db, 'tasks'), orderBy('date'), where('ownerId', '==', user.uid), orderBy('order'))
     }
 
+    // Listen for real-time updates from Firestore query
     const unsub = onSnapshot(q, querySnap => {
       const updatedTasks = querySnap.docs.map(doc => ({
         id: doc.id,
@@ -38,10 +45,12 @@ export const TasksProvider = ({ children }) => {
     return () => unsub()
   }, [isAdmin, user])
 
+  // Calculate the next highest order value (for sorting tasks)
   const getNextOrder = () => {
     return Math.max(...tasks.map(task => task.order ?? 0), 0) + 1000
   }
 
+  // Add a new task to Firestore (only admins allowed)
   const addTask = async (taskData) => {
 
     if (!isAdmin()) return
@@ -65,6 +74,7 @@ export const TasksProvider = ({ children }) => {
     }
   }
 
+  // Mark a task as completed by updating Firestore doc
   const completeTask = async (taskId) => {
     setLoading(true)
     try {
@@ -79,15 +89,16 @@ export const TasksProvider = ({ children }) => {
     }
   }
 
+  // Save reordered task orders in batch for efficient Firestore update
   const saveReorder = async (orderedTasks, moved) => {
     setLoading(true)
 
     const prevState = tasks
-
     setTasks(orderedTasks)
 
     const batch = writeBatch(db)
 
+    // Update each moved task's order in batch
     moved.forEach(({ id, newOrder }) => {
       batch.update(doc(db, 'tasks', id), { order: newOrder })
     })
@@ -102,6 +113,8 @@ export const TasksProvider = ({ children }) => {
     }
   }
 
+  // Return tasks filtered by user and date, sorted by order
+  // Wrapped in useMemo to optimize performance for dependent renders
   const getTasksByUserForDate = (uid, dateObj) => {
 
     const iso = useMemo(() => format(dateObj, 'yyyy-MM-dd'), [dateObj])
@@ -112,6 +125,7 @@ export const TasksProvider = ({ children }) => {
     }, [tasks, uid, iso])
   }
 
+  // Context value exposing state and action functions
   const value = {
     addTask,
     loading,
@@ -128,6 +142,7 @@ export const TasksProvider = ({ children }) => {
   )
 }
 
+// Hook for consuming tasks context with safety check
 export const useTasks = () => {
   const context = useContext(TasksContext)
   if (!context) {

@@ -3,7 +3,6 @@ import React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -16,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/context/authContext"
 
+// Schema for validating user info form input using Zod
 const formSchema = z.object({
   displayName: z.string()
     .nonempty({ message: 'Please provide a user name.' })
@@ -24,10 +24,12 @@ const formSchema = z.object({
   email: z.string().email({ message: 'Please provide a valid email address.' })
 })
 
+// Component for updating the user's display name.
+// The email field is shown but disabled to prevent edits.
 export const UserInfoForm = ({ user }) => {
-
   const { updateUser, loading } = useAuth()
 
+  // Initialize form with Zod validation and default values from the user object
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -36,6 +38,7 @@ export const UserInfoForm = ({ user }) => {
     },
   })
 
+  // Submit handler to update only the display name
   function onSubmit(values) {
     const newUserData = {
       displayName: values.displayName
@@ -46,9 +49,10 @@ export const UserInfoForm = ({ user }) => {
   return (
     <div>
       <h2 className="font-semibold text-lg mb-5">Change username</h2>
-
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-10">
+
+          {/* Email field - shown for reference but not editable */}
           <FormField
             control={form.control}
             name="email"
@@ -62,6 +66,8 @@ export const UserInfoForm = ({ user }) => {
               </FormItem>
             )}
           />
+
+          {/* Editable username field */}
           <FormField
             control={form.control}
             name="displayName"
@@ -75,6 +81,8 @@ export const UserInfoForm = ({ user }) => {
               </FormItem>
             )}
           />
+
+          {/* Submit button with loading state */}
           <Button disabled={loading} type="submit" className='md:w-40'>{loading ? 'Updating...' : 'Update username'}</Button>
         </form>
       </Form>

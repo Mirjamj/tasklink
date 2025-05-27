@@ -6,9 +6,9 @@ import React from 'react'
 import { Toaster } from 'react-hot-toast'
 
 function ApplicationLayout({ authenticated, unauthenticated }) {
-
   const { user, authLoaded } = useAuth()
 
+  // Show a loading spinner while authentication state is being determined
   if (!authLoaded) {
     return (
       <div className='flex items-center justify-center h-[80svh]'>
@@ -20,10 +20,13 @@ function ApplicationLayout({ authenticated, unauthenticated }) {
   return (
     <>
       {
+        // Render either authenticated or unauthenticated content based on user status
         user === null
           ? unauthenticated
           : authenticated
       }
+
+      {/* Toast notifications displayed at the top center */}
       <Toaster
         position="top-center"
         reverseOrder={false} />

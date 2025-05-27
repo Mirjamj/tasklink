@@ -1,13 +1,9 @@
-
-// Use client not needed, parent is a use client because of the import of RegisterForm.
-// (Does not work with {children})
 'use client'
 
 import React, { useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { z } from 'zod'
 import { zodResolver } from '@hookform/resolvers/zod'
-
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -22,6 +18,7 @@ import { Input } from "@/components/ui/input"
 import { useAuth } from '@/context/authContext'
 import { getErrorMessage } from '@/lib/getFirebaseError'
 
+// Zod schema to validate registration form fields
 export const registerFormSchema = z.object({
   displayName: z.string().nonempty({ message: 'Please provide a user name.' })
     .min(3, { message: 'Username must contain at least three characters.' })
@@ -38,9 +35,13 @@ export const registerFormSchema = z.object({
 
 export const RegisterForm = ({ changeForm }) => {
 
+  // State to hold and display any registration error
   const [errorMessage, setErrorMessage] = useState(null)
+
+  // Custom auth hook providing register method and loading state
   const { register, loading } = useAuth()
 
+  // Initialize react-hook-form with Zod resolver
   const form = useForm({
     resolver: zodResolver(registerFormSchema),
     defaultValues: {
@@ -51,25 +52,27 @@ export const RegisterForm = ({ changeForm }) => {
     }
   })
 
+  // Form submit handler
   async function onSubmit(values) {
     try {
       const { email, password, displayName } = values
       await register(email, password, displayName)
-
     } catch (error) {
       const errorMessage = getErrorMessage(error.code)
       setErrorMessage(errorMessage)
     }
-
-    console.log(values)
   }
 
   return (
     <>
       <h2 className='font-semibold text-xl text-center mb-5'>Create new account</h2>
+
+      {/* Show registration error message if any */}
       {errorMessage && <p className='text-red-700 text-center text-sm'>{errorMessage}</p>}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+
+          {/* Username input */}
           <FormField
             control={form.control}
             name="displayName"
@@ -87,6 +90,7 @@ export const RegisterForm = ({ changeForm }) => {
             )}
           />
 
+          {/* Email input */}
           <FormField
             control={form.control}
             name="email"
@@ -104,6 +108,7 @@ export const RegisterForm = ({ changeForm }) => {
             )}
           />
 
+          {/* Password input */}
           <FormField
             control={form.control}
             name="password"
@@ -121,6 +126,7 @@ export const RegisterForm = ({ changeForm }) => {
             )}
           />
 
+          {/* Confirm password input */}
           <FormField
             control={form.control}
             name="confirmPassword"
@@ -138,8 +144,11 @@ export const RegisterForm = ({ changeForm }) => {
             )}
           />
 
+          {/* Switch to login form */}
           <p>Do you already have an account? <span onClick={() => changeForm('login')} className='underline cursor-pointer'>Log in here</span>
           </p>
+
+          {/* Submit button, disabled while loading */}
           <Button disabled={loading} className='w-full sm:w-auto' type="submit">Create account</Button>
         </form>
       </Form>

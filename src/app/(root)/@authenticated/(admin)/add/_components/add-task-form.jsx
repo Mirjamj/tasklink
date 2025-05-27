@@ -43,21 +43,25 @@ import {
 import { Calendar } from '@/components/ui/calendar'
 import { useTasks } from '@/context/tasksContext'
 
+// Define shared base schema for all task types
 const base = z.object({
   title: z.string().nonempty({ message: 'Add task' }),
   ownerId: z.string().nonempty({ message: 'Choose user' }),
 })
 
+// Schema for a one-time task with a single date
 const single = base.extend({
   recurring: z.literal('none'),
   date: z.date(),
 })
 
+// Schema for a repeating task with multiple dates
 const multiple = base.extend({
   recurring: z.literal('multiple'),
   dateMultiple: z.array(z.date()).min(1),
 })
 
+// Schema for a task that spans a range of dates
 const range = base.extend({
   recurring: z.literal('range'),
   dateRange: z.object({
@@ -66,26 +70,29 @@ const range = base.extend({
   })
 })
 
+// Combine all task schemas into one using discriminated union
 const formSchema = z.discriminatedUnion('recurring', [
   single,
   multiple,
   range
 ])
 
-
 export const AddTaskForm = () => {
-
+  // Get default query params (e.g. preselected user/date)
   const searchParams = useSearchParams()
   const presetDate = searchParams.get('date')
   const presetUserId = searchParams.get('userId')
 
+  // Custom hooks for data and actions
   const { users } = useUsers()
   const { addTask, loading } = useTasks()
+
+  // State for UI feedback
   const [submitted, setSubmitted] = useState(false)
   const [errorMessage, setErrorMessage] = useState(null)
   const router = useRouter()
 
-
+  // Initialize react-hook-form with zod validation
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -96,8 +103,10 @@ export const AddTaskForm = () => {
     },
   })
 
+  // Watch the selected recurring type to conditionally render inputs
   const recurringType = form.watch('recurring')
 
+  // Submit handler
   async function onSubmit(values) {
     const base = {
       title: values.title,
@@ -107,14 +116,19 @@ export const AddTaskForm = () => {
     try {
       setSubmitted(true)
 
+      // Create single task
       if (values.recurring === 'none') {
         await addTask({ ...base, date: values.date })
       }
+
+      // Create one task per selected date
       if (values.recurring === 'multiple') {
         await Promise.all(
           values.dateMultiple.map(d => addTask({ ...base, date: d }))
         )
       }
+
+      // Create one task for each day in the range
       if (values.recurring === 'range') {
         const days = eachDayOfInterval({ start: values.dateRange.from, end: values.dateRange.to })
         await Promise.all(
@@ -122,6 +136,7 @@ export const AddTaskForm = () => {
         )
       }
 
+      // Reset form and navigate to homepage
       form.reset()
       router.push('/')
     } catch (error) {
@@ -133,11 +148,12 @@ export const AddTaskForm = () => {
 
   return (
     <Form {...form}>
-      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+      <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col space-y-10">
+
+        {/* Task title input */}
         <FormField
           control={form.control}
           name="title"
-
           render={({ field }) => (
             <FormItem>
               <FormLabel>Task</FormLabel>
@@ -148,6 +164,8 @@ export const AddTaskForm = () => {
             </FormItem>
           )}
         />
+
+        {/* Assignee selector with searchable dropdown */}
         <FormField
           control={form.control}
           name="ownerId"
@@ -211,6 +229,8 @@ export const AddTaskForm = () => {
             </FormItem>
           )}
         />
+
+        {/* Dropdown to choose recurrence type */}
         <FormField
           control={form.control}
           name="recurring"
@@ -239,6 +259,8 @@ export const AddTaskForm = () => {
           )}
         />
 
+        {/* Conditionally render calendar input based on recurrence type */}
+        <FormLabel className='md:text-center'>Select date</FormLabel>
         {
           recurringType === 'none' && (
             <FormField
@@ -250,7 +272,7 @@ export const AddTaskForm = () => {
                     mode="single"
                     selected={field.value}
                     onSelect={field.onChange}
-                    className='w-65'
+                    className='w-57'
                   />
                   <FormMessage />
                 </FormItem>
@@ -270,6 +292,7 @@ export const AddTaskForm = () => {
                     mode="multiple"
                     selected={field.value}
                     onSelect={field.onChange}
+                    className='w-57'
                   />
                   <FormMessage />
                 </FormItem>
@@ -289,6 +312,7 @@ export const AddTaskForm = () => {
                     mode="range"
                     selected={field.value}
                     onSelect={field.onChange}
+                    className='w-57'
                   />
                   <FormMessage />
                 </FormItem>
@@ -296,9 +320,10 @@ export const AddTaskForm = () => {
             />
           )
         }
-
         {errorMessage && <p className='text-sm text-red-600'>{errorMessage}</p>}
-        <Button disabled={loading || submitted} type="submit">{loading ? 'Creating...' : 'Create task'}</Button>
+
+        {/* Submit button */}
+        <Button disabled={loading || submitted} className='w-50' type="submit">{loading ? 'Creating...' : 'Create task'}</Button>
       </form>
     </Form >
   )

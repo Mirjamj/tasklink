@@ -3,7 +3,6 @@ import React from "react"
 import { zodResolver } from "@hookform/resolvers/zod"
 import { useForm } from "react-hook-form"
 import { z } from "zod"
-
 import { Button } from "@/components/ui/button"
 import {
   Form,
@@ -16,6 +15,7 @@ import {
 import { Input } from "@/components/ui/input"
 import { useAuth } from "@/context/authContext"
 
+// Define validation schema for the change password form using Zod
 const formSchema = z.object({
   currentPassword: z.string().nonempty({ message: 'Current password required' }),
   newPassword: z.string().min(6, { message: 'Password must contain at least 6 characters' }),
@@ -26,9 +26,9 @@ const formSchema = z.object({
 })
 
 export const ChangePasswordForm = ({ className }) => {
-
   const { changePassword, loading } = useAuth()
 
+  // Initialize react-hook-form with validation schema and default values
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -38,17 +38,20 @@ export const ChangePasswordForm = ({ className }) => {
     },
   })
 
+  // Handle form submission
   function onSubmit(values) {
     changePassword(values.currentPassword, values.newPassword)
   }
 
   return (
-
     <div>
       <h2 className="font-semibold text-lg mb-5">Change password</h2>
 
+      {/* Form wrapper provides context to children */}
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="flex flex-col gap-10">
+
+          {/* Current password field */}
           <FormField
             control={form.control}
             name="currentPassword"
@@ -62,6 +65,8 @@ export const ChangePasswordForm = ({ className }) => {
               </FormItem>
             )}
           />
+
+          {/* New password field */}
           <FormField
             control={form.control}
             name="newPassword"
@@ -75,6 +80,8 @@ export const ChangePasswordForm = ({ className }) => {
               </FormItem>
             )}
           />
+
+          {/* Confirm new password field */}
           <FormField
             control={form.control}
             name="confirmPassword"
@@ -88,6 +95,8 @@ export const ChangePasswordForm = ({ className }) => {
               </FormItem>
             )}
           />
+
+          {/* Submit button, shows loading state */}
           <Button disabled={loading} type="submit" className='md:w-40'>{loading ? 'Updating...' : 'Change password'}</Button>
         </form>
       </Form>

@@ -11,9 +11,11 @@ import {
 export const DatePicker = ({ date, onDateChange }) => {
   return (
     <Popover>
+      {/* Button that triggers the date picker popover */}
       <PopoverTrigger asChild>
         <Button variant='outline'>
           {
+            // Display a label for today, tomorrow, yesterday, or formatted date otherwise
             isToday(date)
               ? 'Today'
               : isTomorrow(date)
@@ -24,6 +26,8 @@ export const DatePicker = ({ date, onDateChange }) => {
           }
         </Button>
       </PopoverTrigger>
+
+      {/* Popover content showing the calendar */}
       <PopoverContent className="w-auto p-0">
         <Calendar
           mode="single"

@@ -20,6 +20,8 @@ export const metadata = {
   description: "TaskLink is a smart task management platform that brings your team, tasks, and workflow together - so you can focus on what matters most.",
 };
 
+// Root layout component wrapping the entire app with global styles and providers.
+// Applies fonts, sets up Providers context, and ensures consistent page structure.
 export default function RootLayout({ children }) {
   return (
     <html lang="en" suppressHydrationWarning>
